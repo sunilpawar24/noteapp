@@ -1,89 +1,142 @@
 import { useState } from "react";
 
 const App = () => {
-  const [Title, setTitle] = useState("");
-  const [Notes, setNotes] = useState("");
-  const [Tasks, setTasks] = useState([]);
+  const [title, setTitle] = useState("");
+  const [notes, setNotes] = useState("");
+  const [tasks, setTasks] = useState([]);
+  const [editId, setEditId] = useState(null);
 
-  function SubmitForm() {
-    console.log("Task Added", { Heading: Title, List: Notes });
+  // Add or Update Task
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-    let newtask = [...Tasks];
-    newtask.push({ Heading: Title, List: Notes });
-    setTasks(newtask);
-    console.log(newtask);
+    if (!title.trim() || !notes.trim()) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    if (editId) {
+      // Update Task
+      const updatedTasks = tasks.map((task) =>
+        task.id === editId
+          ? { ...task, heading: title, list: notes }
+          : task
+      );
+      setTasks(updatedTasks);
+      setEditId(null);
+    } else {
+      // Add Task
+      const newTask = {
+        id: Date.now(),
+        heading: title,
+        list: notes,
+      };
+      setTasks([newTask, ...tasks]);
+    }
+
     setTitle("");
     setNotes("");
-  }
-  return (
-    <>
-      <section className="lg:flex items-center justify-center">
-        {/* Submit Form UI */}
-        <div className="lg:w-1/2 bg-sky-300 w-full  h-screen flex items-center justify-center p-4">
-          <div className="bg-black/70 max-w-sm w-full p-2 rounded-3xl shadow-2xl">
-            <form
-              className="bg-black text-white w-full max-w-sm rounded-2xl p-6"
-              onSubmit={(e) => {
-                e.preventDefault();
-                SubmitForm();
-              }}
-            >
-              <h1 className="text-center text-white rounded-2xl p-6  w-full max-w-sm">
-                Add Your Task
-              </h1>
-              <input
-                type="text"
-                value={Title}
-                onChange={(e) => {
-                  setTitle(e.target.value);
-                }}
-                className="w-full px-4 py-2 bg-[#222] rounded-md my-2 text-white font-semibold outline-none focus:ring-2 focus:ring-white"
-                placeholder="Heading"
-              />
-              <textarea
-                rows={8}
-                className="w-full px-4 py-2 bg-[#222] rounded-md my-2 outline-none focus:ring-2 focus:ring-white"
-                placeholder="Notes..."
-                value={Notes}
-                onChange={(e) => {
-                  setNotes(e.target.value);
-                }}
-              ></textarea>
-              <input
-                type="submit"
-                value="Add task"
-                className="w-full bg-white text-black rounded-md font-semibold px-4 py-2 my-2 active:scale-95 active:bg-white/50 active:text-white "
-              />
-            </form>
-          </div>
-        </div>
+  };
 
-        {/* UI for notes */}
-        <div className="lg:w-1/2 w-full bg-blue-400 h-screen  max-lg:border-t-4 lg:border-l-3  border-dashed flex flex-wrap items-center justify-center p-6 gap-6 overflow-auto">
-          {Tasks.map((task, id) => {
-            return (
-              <div
-                className="w-full max-w-78 h-78 bg-white rounded-4xl relative shadow-2xl flex items-end justify-center p-4"
-                key={id}
-              >
-                <img
-                  src="../public/pin.png"
-                  className="h-15 w-20 absolute z-10 top-3 me-5"
-                  alt=""
-                />
-                <div className="w-full  h-58 bg-orange-200 rounded-4xl p-4 ">
-                  <h1 className="test-3xl font-bold">{id+ 1}</h1>
-                  <h1 className="text-5xl font-semibold text-center my-1">
-                    {task.Heading}
-                  </h1>
-                  {task.List}
-                </div>
-              </div>
-            );
-          })}
+  // Delete Task
+  const deleteTask = (id) => {
+    setTasks(tasks.filter((task) => task.id !== id));
+  };
+
+  // Edit Task
+  const editTask = (task) => {
+    setTitle(task.heading);
+    setNotes(task.list);
+    setEditId(task.id);
+  };
+
+  return (
+    <section className="min-h-screen bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 flex flex-col lg:flex-row">
+
+      {/* FORM */}
+      <div className="lg:w-1/2 w-full flex items-center justify-center p-6">
+        <div className="backdrop-blur-lg bg-white/20 p-6 rounded-3xl shadow-2xl w-full max-w-md">
+
+          <form onSubmit={handleSubmit}>
+            <h1 className="text-white text-2xl font-bold text-center mb-6">
+              {editId ? "Edit Task" : "Add New Task"}
+            </h1>
+
+            <input
+              type="text"
+              placeholder="Task Title..."
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full mb-4 px-4 py-2 rounded-lg bg-white/80 outline-none"
+            />
+
+            <textarea
+              rows="5"
+              placeholder="Write your notes..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full mb-4 px-4 py-2 rounded-lg bg-white/80 outline-none"
+            ></textarea>
+
+            <button
+              type="submit"
+              className="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-800 transition"
+            >
+              {editId ? "Update Task" : "Add Task"}
+            </button>
+          </form>
+
         </div>
-      </section>
-    </>
+      </div>
+
+      {/* TASK LIST */}
+      <div className="lg:w-1/2 w-full p-6 overflow-auto flex flex-wrap gap-6 justify-center">
+
+        {tasks.length === 0 ? (
+          <div className="text-center text-white mt-20">
+            <h2 className="text-2xl font-bold">No Tasks Yet 😴</h2>
+            <p className="opacity-80">Start adding your tasks!</p>
+          </div>
+        ) : (
+          tasks.map((task, index) => (
+            <div
+              key={task.id}
+              className="w-full max-w-xs bg-white rounded-3xl p-4 shadow-xl relative hover:scale-105 transition"
+            >
+              {/* Pin */}
+              <div className="absolute -top-3 right-4 text-2xl">📌</div>
+
+              <h2 className="text-sm text-gray-500">#{index + 1}</h2>
+
+              <h3 className="text-xl font-bold text-center mb-2">
+                {task.heading}
+              </h3>
+
+              <p className="text-gray-600 text-sm mb-4">
+                {task.list}
+              </p>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => editTask(task)}
+                  className="w-1/2 bg-blue-500 text-white py-1 rounded-lg hover:bg-blue-600"
+                >
+                  Edit
+                </button>
+
+                <button
+                  onClick={() => deleteTask(task.id)}
+                  className="w-1/2 bg-red-500 text-white py-1 rounded-lg hover:bg-red-600"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+
+      </div>
+    </section>
   );
 };
 
